@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Model untuk User/Karyawan dan Admin
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  position  String?  // Jabatan (opsional)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attendances Attendance[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// Model untuk Absensi
+model Attendance {
+  id          String           @id @default(cuid())
+  userId      String
+  date        DateTime         @db.Date
+  status      AttendanceStatus
+  description String?          @db.Text // Keterangan untuk izin/sakit
+  photo       String?          // Path foto absensi
+  checkInTime DateTime         @default(now())
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date]) // 1 user hanya boleh absen 1x per hari
+  @@map("attendances")
+}
+
+enum AttendanceStatus {
+  HADIR
+  IZIN
+  SAKIT
+}
